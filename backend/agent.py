@@ -2,6 +2,7 @@ import json
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
+import sicoes_scraper
 
 # Cargar variables de entorno (como OPENAI_API_KEY)
 load_dotenv()
@@ -133,8 +134,18 @@ def evaluar_licitaciones(licitaciones: list, perfil: dict):
         print(f"[ERROR] Error al conectar con OpenRouter: {e}")
         print("[AYUDA] Recuerda: Necesitas configurar la variable de entorno OPENROUTER_API_KEY para ejecutar esto.")
 
-# Ejecución de prueba si se corre este script directamente
+# Ejecución principal con datos reales
 if __name__ == "__main__":
     print("[SISTEMA] Iniciando LicitaBot - Agente de Inteligencia Artificial\n")
-    evaluar_licitaciones(licitaciones_mock, perfil_usuario_mock)
+    
+    print("[INFO] Obteniendo datos reales del SICOES...")
+    URL_SICOES = "https://www.sicoesmonitor.com/licitaciones"
+    licitaciones_reales = sicoes_scraper.extraer_licitaciones(URL_SICOES)
+    
+    if licitaciones_reales:
+        evaluar_licitaciones(licitaciones_reales, perfil_usuario_mock)
+    else:
+        print("[AVISO] No se encontraron licitaciones nuevas o falló el scraper. Usando datos falsos de respaldo...")
+        evaluar_licitaciones(licitaciones_mock, perfil_usuario_mock)
+        
     print("\n[OK] Proceso completado.")

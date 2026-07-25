@@ -97,7 +97,7 @@ export function TendersFeed({ tenders, isLoading }: { tenders: Tender[], isLoadi
             <p className="text-sm text-zinc-400">No hay licitaciones en esta categoría todavía.</p>
           </div>
         ) : (
-          filtered.map((tender) => <TenderCard key={tender.id} tender={tender} />)
+          filtered.map((tender, i) => <TenderCard key={tender.id} tender={tender} index={i} />)
         )}
       </div>
     </div>

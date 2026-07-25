@@ -15,30 +15,43 @@ import {
 } from "lucide-react"
 import type { Tender } from "@/lib/licitabot-data"
 
-const matchStyles: Record<Tender["matchLevel"], string> = {
-  Alto: "border-zinc-500 bg-zinc-100 text-zinc-900",
-  Medio: "border-[#27272a] bg-[#27272a] text-zinc-200",
-  Bajo: "border-[#27272a] bg-[#09090b] text-zinc-500",
+const matchStyles: Record<Tender["matchLevel"], { badge: string; glow: string }> = {
+  Alto: {
+    badge: "border-emerald-500/40 bg-emerald-950/40 text-emerald-300",
+    glow: "hover:border-emerald-500/30 hover:shadow-[0_0_20px_-4px_rgba(52,211,153,0.12)]",
+  },
+  Medio: {
+    badge: "border-amber-500/40 bg-amber-950/30 text-amber-300",
+    glow: "hover:border-amber-500/20 hover:shadow-[0_0_20px_-4px_rgba(251,191,36,0.08)]",
+  },
+  Bajo: {
+    badge: "border-[#27272a] bg-[#09090b] text-zinc-500",
+    glow: "hover:border-zinc-700 hover:shadow-[0_0_20px_-4px_rgba(161,161,170,0.06)]",
+  },
 }
 
-export function TenderCard({ tender }: { tender: Tender }) {
+export function TenderCard({ tender, index = 0 }: { tender: Tender; index?: number }) {
   const [showSummary, setShowSummary] = useState(false)
+  const styles = matchStyles[tender.matchLevel]
 
   return (
-    <article className="group rounded-2xl border border-[#27272a] bg-[#121216] p-5 transition-colors hover:border-zinc-700">
+    <article
+      className={`group rounded-2xl border border-[#27272a] bg-[#121216]/80 backdrop-blur-sm p-5 transition-all duration-300 card-glow animate-fade-slide-up ${styles.glow}`}
+      style={{ animationDelay: `${index * 80}ms` }}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-md border border-[#27272a] bg-[#09090b] px-2 py-0.5 font-mono text-[11px] text-zinc-500">
             {tender.id}
           </span>
           {tender.isNew && (
-            <span className="rounded-md border border-zinc-600 bg-[#09090b] px-2 py-0.5 text-[11px] font-semibold text-zinc-300">
+            <span className="rounded-md border border-emerald-500/30 bg-emerald-950/30 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
               Nuevo
             </span>
           )}
         </div>
         <span
-          className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-0.5 text-xs font-semibold ${matchStyles[tender.matchLevel]}`}
+          className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-0.5 text-xs font-semibold ${styles.badge}`}
         >
           <Sparkles className="h-3 w-3" />
           Match: {tender.matchScore}%
@@ -64,7 +77,7 @@ export function TenderCard({ tender }: { tender: Tender }) {
       </div>
 
       {showSummary && (
-        <div className="mt-4 flex gap-2.5 rounded-xl border border-[#27272a] bg-[#09090b] p-3.5">
+        <div className="mt-4 flex gap-2.5 rounded-xl border border-[#27272a] bg-[#09090b] p-3.5 animate-fade-slide-up">
           <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
           <p className="text-sm leading-relaxed text-zinc-300">{tender.aiSummary}</p>
         </div>
@@ -73,13 +86,13 @@ export function TenderCard({ tender }: { tender: Tender }) {
       <div className="mt-4 flex flex-wrap gap-2 border-t border-[#27272a] pt-4">
         <button
           onClick={() => setShowSummary((v) => !v)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-2 text-xs font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-2 text-xs font-medium text-zinc-900 transition-all duration-200 hover:bg-white hover:shadow-[0_0_12px_2px_rgba(250,250,250,0.06)]"
         >
           <Sparkles className="h-3.5 w-3.5" />
           Ver Resumen de IA
-          <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showSummary ? "rotate-180" : ""}`} />
+          <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${showSummary ? "rotate-180" : ""}`} />
         </button>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272a] bg-[#09090b] px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-50">
+        <button className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272a] bg-[#09090b] px-3 py-2 text-xs font-medium text-zinc-300 transition-all duration-200 hover:border-zinc-600 hover:text-zinc-50 hover:bg-zinc-900">
           <PenLine className="h-3.5 w-3.5" />
           Generar Borrador de Postulación
         </button>
@@ -87,7 +100,7 @@ export function TenderCard({ tender }: { tender: Tender }) {
           href="https://sicoes.gob.bo/portal/contrataciones/busqueda/convocatorias.php"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272a] bg-[#09090b] px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272a] bg-[#09090b] px-3 py-2 text-xs font-medium text-zinc-300 transition-all duration-200 hover:border-zinc-600 hover:text-zinc-50 hover:bg-zinc-900"
         >
           <ExternalLink className="h-3.5 w-3.5" />
           Ver en SICOES
@@ -118,7 +131,7 @@ function ZavuBadge({ tender }: { tender: Tender }) {
 
   const Icon = tender.zavuStatus === "Telegram" ? Send : Smartphone
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md border border-zinc-600 bg-[#09090b] px-2.5 py-1 text-[11px] font-medium text-zinc-200">
+    <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-950/20 px-2.5 py-1 text-[11px] font-medium text-emerald-300">
       <Icon className="h-3 w-3" />
       Enviado a {tender.zavuStatus} {tender.zavuTime}
     </span>

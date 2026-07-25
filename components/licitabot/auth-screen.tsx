@@ -1,134 +1,109 @@
 "use client"
 
 import { useState } from "react"
-import { Terminal, Mail, Lock, Building2, ArrowLeft, ArrowRight } from "lucide-react"
+import { Terminal, ArrowLeft, ArrowRight } from "lucide-react"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
 
-type Mode = "login" | "register"
-
 export function AuthScreen() {
-  const [mode, setMode] = useState<Mode>("login")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [company, setCompany] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Usamos el login oficial de Google por NextAuth
+  const handleGoogleLogin = () => {
+    setIsLoading(true)
     signIn("google", { callbackUrl: "/dashboard" })
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center px-4 py-12">
+    <div className="relative flex min-h-screen flex-col items-center justify-center px-4 py-12 bg-[#09090b]">
+      {/* Grid pattern */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:44px_44px]"
+        className="pointer-events-none absolute inset-0 opacity-[0.03] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:44px_44px]"
+      />
+
+      {/* Radial glow behind card */}
+      <div
+        aria-hidden
+        className="hero-glow pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[400px] w-[500px] rounded-full bg-gradient-to-br from-zinc-500/8 via-transparent to-transparent blur-3xl"
       />
 
       <Link
         href="/"
-        className="relative mb-8 inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+        className="group relative mb-8 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-zinc-500 transition-all duration-200 hover:text-zinc-200 hover:bg-white/[0.04]"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
         Volver al inicio
       </Link>
 
-      <div className="relative w-full max-w-md rounded-xl border border-[#27272a] bg-[#121216] p-8 shadow-2xl shadow-black/40">
+      <div className="animate-scale-in relative w-full max-w-md rounded-2xl border border-[#27272a] animate-border-shimmer bg-[#121216]/90 backdrop-blur-xl p-6 sm:p-8 shadow-2xl shadow-black/50">
+        {/* Top gradient accent */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-2xl bg-gradient-to-r from-transparent via-zinc-400/25 to-transparent"
+        />
+
+        {/* Logo + Title */}
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#27272a] bg-[#09090b]">
-            <Terminal className="h-5 w-5 text-zinc-200" strokeWidth={2.25} />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] shadow-lg shadow-black/20">
+            <Terminal className="h-6 w-6 text-zinc-200" strokeWidth={2.25} />
           </div>
           <div>
-            <h1 className="text-lg font-semibold tracking-tight text-zinc-100">LicitaBot Bolivia</h1>
-            <p className="mt-1 text-sm text-zinc-400">Accede al panel de tu agente de licitaciones</p>
+            <h1 className="text-xl font-bold tracking-tight text-zinc-100">LicitaBot Bolivia</h1>
+            <p className="mt-1.5 text-sm text-zinc-400 max-w-xs mx-auto">
+              Accede al panel de tu agente de licitaciones con IA
+            </p>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="mt-7 grid grid-cols-2 gap-1 rounded-lg border border-[#27272a] bg-[#09090b] p-1">
-          {(["login", "register"] as Mode[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                mode === m ? "bg-[#27272a] text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              {m === "login" ? "Iniciar Sesión" : "Crear Cuenta"}
-            </button>
-          ))}
+        {/* Google Login — Primary CTA */}
+        <div className="mt-8 flex flex-col gap-4">
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            className="btn-shine group relative inline-flex w-full items-center justify-center gap-3 rounded-xl bg-zinc-100 px-5 py-3.5 text-sm font-semibold text-zinc-900 transition-all duration-300 hover:bg-white hover:shadow-[0_0_24px_4px_rgba(250,250,250,0.08)] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <svg className="h-4 w-4 animate-spin text-zinc-600" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Redirigiendo a Google...
+              </>
+            ) : (
+              <>
+                {/* Google icon SVG */}
+                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Continuar con Google
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </>
+            )}
+          </button>
+
+          {/* Secondary option */}
+          <Link
+            href="/dashboard"
+            className="group inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-3 text-sm font-medium text-zinc-400 transition-all duration-200 hover:border-zinc-600 hover:bg-white/[0.05] hover:text-zinc-200"
+          >
+            Ver demo sin cuenta
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-          {mode === "register" && (
-            <Field icon={Building2} label="Nombre de la empresa o PyME">
-              <input
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                placeholder="Constructora e Ingeniería del Sur"
-                required
-                className="w-full rounded-lg border border-[#27272a] bg-[#09090b] px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition-colors focus:border-zinc-500"
-              />
-            </Field>
-          )}
-
-          <Field icon={Mail} label="Correo electrónico">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@empresa.bo"
-              required
-              className="w-full rounded-lg border border-[#27272a] bg-[#09090b] px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition-colors focus:border-zinc-500"
-            />
-          </Field>
-
-          <Field icon={Lock} label="Contraseña">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              className="w-full rounded-lg border border-[#27272a] bg-[#09090b] px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition-colors focus:border-zinc-500"
-            />
-          </Field>
-
-            <button
-              type="button"
-              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-              className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-100 py-2.5 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
-            >
-              Continuar con Google
-              <ArrowRight className="h-4 w-4" />
-            </button>
-        </form>
-
-        <p className="mt-6 text-center text-xs text-zinc-600">
-          Al continuar aceptas los términos de servicio y la política de privacidad de LicitaBot.
-        </p>
+        {/* Info text */}
+        <div className="mt-6 rounded-xl border border-white/[0.04] bg-white/[0.02] px-4 py-3">
+          <p className="text-center text-xs leading-relaxed text-zinc-500">
+            Usamos <span className="text-zinc-400">Google Sign-In</span> para que no tengas que recordar otra contraseña.
+            Tu cuenta empresarial está segura con OAuth 2.0.
+          </p>
+        </div>
       </div>
-    </div>
-  )
-}
-
-function Field({
-  icon: Icon,
-  label,
-  children,
-}: {
-  icon: React.ElementType
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-400">
-        <Icon className="h-3.5 w-3.5 text-zinc-500" />
-        {label}
-      </label>
-      {children}
     </div>
   )
 }

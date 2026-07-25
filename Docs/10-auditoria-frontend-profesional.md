@@ -19,42 +19,44 @@ El proyecto actual cuenta con una base excelente en la capa de presentación:
 
 Para que este frontend pueda ser desplegado para usuarios reales y cobrado como un SaaS (Software as a Service), se deben implementar las siguientes características técnicas:
 
-### 2.1. Integración de API (Data Fetching)
-- **Problema Actual:** Todos los datos (licitaciones, perfil, simulador) están *hardcodeados* en `lib/licitabot-data.ts`.
+### ⏳ 2.1. Integración de API (Data Fetching)
+- **Estado:** Pendiente.
+- **Problema Actual:** Todos los datos (licitaciones, simulador) están *hardcodeados* en `lib/licitabot-data.ts`.
 - **Implementación Faltante:**
   - Configurar clientes HTTP (como `axios` o el nativo `fetch` usando Server Components/Actions de Next.js).
-  - Usar herramientas como `React Query` o `SWR` para manejar el caché, reintentos (retries) y revalidación de datos del backend (FastAPI).
+  - Usar herramientas como `React Query` o `SWR` para manejar el caché y revalidación de datos del backend (FastAPI).
 
-### 2.2. Autenticación y Autorización reales
-- **Problema Actual:** El componente `auth-screen.tsx` solo cambia la vista a "dashboard" mediante `e.preventDefault()`, sin validar credenciales.
+### ✅ 2.2. Autenticación y Autorización reales
+- **Estado:** Completado.
+- **Implementación Realizada:**
+  - Se integró `NextAuth.js` con el proveedor de Google OAuth.
+  - Se configuró el `middleware.ts` nativo para proteger la ruta `/dashboard`.
+
+### ✅ 2.3. Gestión de Estado Global y Persistencia
+- **Estado:** Completado.
+- **Implementación Realizada:**
+  - Se instaló `Zustand` con persistencia en `localStorage`.
+  - El perfil de la empresa (palabras clave, canales, Telegram ID) ahora mantiene su estado al recargar la página (`agent-config.tsx`).
+
+### ⏳ 2.4. Manejo de Errores y Estados de Carga (Loading States)
+- **Estado:** Pendiente.
+- **Problema Actual:** Los botones cambian a un estado de carga simulado por `setTimeout` o por componentes fijos.
 - **Implementación Faltante:**
-  - Integrar un proveedor de Auth (ej. `NextAuth.js`, `Supabase Auth`, o JWT nativo con el backend FastAPI).
-  - Proteger rutas: Actualmente no existe un middleware para redirigir a `/auth` si el usuario no está logueado. (Falta `middleware.ts`).
+  - **Loading:** Agregar `loading.tsx` y *Skeleton Loaders* reales mientras se espera la respuesta de la API del backend.
+  - **Errores:** Crear `error.tsx` o usar *Error Boundaries* para capturar fallos de la API.
 
-### 2.3. Gestión de Estado Global y Persistencia
-- **Problema Actual:** El estado del perfil (empresa, palabras clave, toggles de Zavu) vive en variables locales `useState` dentro de `agent-config.tsx`. Si el usuario recarga la página, pierde todo.
-- **Implementación Faltante:**
-  - Sincronizar el estado del usuario con la base de datos (Backend).
-  - Guardar preferencias localmente (`localStorage` o estado global como `Zustand` / `Context API`) para mantener la sesión fluida.
-
-### 2.4. Manejo de Errores y Estados de Carga (Loading States)
-- **Problema Actual:** Los botones cambian a un estado de carga simulado por `setTimeout`, pero la aplicación no maneja errores de red.
-- **Implementación Faltante:**
-  - **Loading:** Agregar `loading.tsx` o `Suspense` boundaries de Next.js. Implementar *Skeleton Loaders* reales mientras se espera la respuesta de la API.
-  - **Errores:** Crear `error.tsx` o usar *Error Boundaries* para capturar fallos de la API y mostrar un mensaje amigable al usuario (con Toasts de error), en lugar de romper la UI.
-
-### 2.5. Enlaces (Links) y Accesibilidad (a11y)
+### ⏳ 2.5. Enlaces (Links) y Accesibilidad (a11y)
+- **Estado:** Parcialmente completado.
 - **Problema Actual:**
-  - Enlaces "muertos": En el Footer (`landing-page.tsx`) y botones como "Ver en SICOES" usan `href="#"` o no tienen acción real asignada.
-  - El componente `button.tsx` tiene reglas de accesibilidad (`aria-expanded`, `aria-invalid`), pero falta asegurar soporte de teclado en modales y menús.
+  - Se refactorizó la Landing Page y Auth para usar `<Link>`, pero en el Footer y los botones "Ver en SICOES" se sigue usando `href="#"`.
 - **Implementación Faltante:**
-  - Reemplazar las anclas muertas con el componente `<Link>` de Next.js.
   - Conectar los enlaces de licitaciones a sus URLs reales en el SICOES.
 
-### 2.6. Zavu API (El Core del Track)
-- **Problema Actual:** El toast dice "Enviado a Zavu", pero no hay ninguna llamada de red (Fetch) real hacia la API de Zavu.
-- **Implementación Faltante:**
-  - Crear un *Server Action* o *API Route* en Next.js que reciba el payload y haga el POST a la API de Zavu usando la `NEXT_PUBLIC_ZAVU_API_KEY`, o idealmente delegar esto completamente al Backend FastAPI, mientras el frontend solo escucha vía WebSockets o Polling el estado de la notificación.
+### ✅ 2.6. Zavu API (El Core del Track)
+- **Estado:** Completado.
+- **Implementación Realizada:**
+  - Se implementó el patrón BFF creando la API route `/api/zavu`.
+  - El dashboard hace un `fetch` real hacia este endpoint, procesando la variable segura del servidor y despachando alertas reales a Telegram.
 
 ---
 

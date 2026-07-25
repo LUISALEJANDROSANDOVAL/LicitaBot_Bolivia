@@ -3,28 +3,28 @@
 import { useState } from "react"
 import { Building2, Tags, KeyRound, Send, Smartphone, CheckCircle2, Settings, X } from "lucide-react"
 import { SECTORS } from "@/lib/licitabot-data"
+import { useAgentStore } from "@/lib/store"
 
 export function AgentConfig() {
-  const [company, setCompany] = useState("Constructora e Ingeniería del Sur")
-  const [keywords, setKeywords] = useState<string[]>(["cemento", "asfalto", "infraestructura"])
+  const { 
+    company, setCompany, 
+    keywords, setKeywords, addKeyword, removeKeyword,
+    selectedSectors, toggleSector,
+    telegramOn, setTelegramOn,
+    smsOn, setSmsOn,
+    telegramId, setTelegramId,
+    phone, setPhone 
+  } = useAgentStore()
+  
   const [keywordInput, setKeywordInput] = useState("")
-  const [selectedSectors, setSelectedSectors] = useState<string[]>(["Obras civiles"])
-  const [telegramOn, setTelegramOn] = useState(true)
-  const [smsOn, setSmsOn] = useState(false)
-  const [telegramId, setTelegramId] = useState("@constructora_sur")
-  const [phone, setPhone] = useState("+591 70012345")
   const [saved, setSaved] = useState(false)
 
-  const toggleSector = (sector: string) => {
-    setSelectedSectors((prev) =>
-      prev.includes(sector) ? prev.filter((s) => s !== sector) : [...prev, sector],
-    )
-  }
+  // El store global ya provee toggleSector
 
-  const addKeyword = () => {
+  const handleAddKeyword = () => {
     const value = keywordInput.trim().toLowerCase()
     if (value && !keywords.includes(value)) {
-      setKeywords((prev) => [...prev, value])
+      addKeyword(value)
     }
     setKeywordInput("")
   }
@@ -86,7 +86,7 @@ export function AgentConfig() {
               >
                 {kw}
                 <button
-                  onClick={() => setKeywords((prev) => prev.filter((k) => k !== kw))}
+                  onClick={() => removeKeyword(kw)}
                   className="text-zinc-500 transition-colors hover:text-zinc-200"
                   aria-label={`Quitar ${kw}`}
                 >
@@ -100,7 +100,7 @@ export function AgentConfig() {
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.nativeEvent.isComposing && e.keyCode !== 229) {
                   e.preventDefault()
-                  addKeyword()
+                  handleAddKeyword()
                 }
               }}
               placeholder="Agregar palabra..."

@@ -9,6 +9,7 @@ import {
   BellRing,
   ShieldCheck,
 } from "lucide-react"
+import Link from "next/link"
 import type { View } from "@/app/page"
 
 interface LandingPageProps {
@@ -46,19 +47,19 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
             <span className="text-sm font-semibold tracking-tight text-zinc-100">LicitaBot Bolivia</span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => onNavigate("auth")}
+            <Link
+              href="/auth"
               className="hidden rounded-lg px-3.5 py-2 text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-100 sm:inline-flex"
             >
               Iniciar sesión
-            </button>
-            <button
-              onClick={() => onNavigate("auth")}
+            </Link>
+            <Link
+              href="/auth"
               className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3.5 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
             >
               Comenzar
               <ArrowRight className="h-3.5 w-3.5" />
-            </button>
+            </Link>
           </div>
         </div>
       </header>
@@ -85,20 +86,20 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
             al instante por Zavu en Telegram o SMS.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <button
-              onClick={() => onNavigate("auth")}
+            <Link
+              href="/auth"
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-100 px-5 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 sm:w-auto"
             >
               Comenzar ahora
               <ArrowRight className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onNavigate("dashboard")}
+            </Link>
+            <Link
+              href="/dashboard"
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#27272a] bg-[#121216] px-5 py-3 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:text-zinc-50 sm:w-auto"
             >
               <PlayCircle className="h-4 w-4" />
               Ver demo en vivo
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -137,13 +138,13 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => onNavigate("auth")}
+          <Link
+            href="/auth"
             className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-zinc-100 px-5 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
           >
             Crear cuenta gratis
             <ArrowRight className="h-4 w-4" />
-          </button>
+          </Link>
         </div>
       </section>
 

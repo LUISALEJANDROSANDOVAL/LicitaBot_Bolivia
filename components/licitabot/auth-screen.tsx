@@ -2,15 +2,12 @@
 
 import { useState } from "react"
 import { Terminal, Mail, Lock, Building2, ArrowLeft, ArrowRight } from "lucide-react"
-import type { View } from "@/app/page"
-
-interface AuthScreenProps {
-  onNavigate: (view: View) => void
-}
+import { signIn } from "next-auth/react"
+import Link from "next/link"
 
 type Mode = "login" | "register"
 
-export function AuthScreen({ onNavigate }: AuthScreenProps) {
+export function AuthScreen() {
   const [mode, setMode] = useState<Mode>("login")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -18,7 +15,8 @@ export function AuthScreen({ onNavigate }: AuthScreenProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onNavigate("dashboard")
+    // Usamos el login oficial de Google por NextAuth
+    signIn("google", { callbackUrl: "/dashboard" })
   }
 
   return (
@@ -28,13 +26,13 @@ export function AuthScreen({ onNavigate }: AuthScreenProps) {
         className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:44px_44px]"
       />
 
-      <button
-        onClick={() => onNavigate("landing")}
+      <Link
+        href="/"
         className="relative mb-8 inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-zinc-300"
       >
         <ArrowLeft className="h-4 w-4" />
         Volver al inicio
-      </button>
+      </Link>
 
       <div className="relative w-full max-w-md rounded-xl border border-[#27272a] bg-[#121216] p-8 shadow-2xl shadow-black/40">
         <div className="flex flex-col items-center gap-3 text-center">
@@ -97,13 +95,14 @@ export function AuthScreen({ onNavigate }: AuthScreenProps) {
             />
           </Field>
 
-          <button
-            type="submit"
-            className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-100 py-2.5 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
-          >
-            {mode === "login" ? "Ingresar al panel" : "Crear cuenta y continuar"}
-            <ArrowRight className="h-4 w-4" />
-          </button>
+            <button
+              type="button"
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-100 py-2.5 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
+            >
+              Continuar con Google
+              <ArrowRight className="h-4 w-4" />
+            </button>
         </form>
 
         <p className="mt-6 text-center text-xs text-zinc-600">

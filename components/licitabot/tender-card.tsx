@@ -83,10 +83,15 @@ export function TenderCard({ tender }: { tender: Tender }) {
           <PenLine className="h-3.5 w-3.5" />
           Generar Borrador de Postulación
         </button>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272a] bg-[#09090b] px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-50">
+        <a 
+          href="https://sicoes.gob.bo/portal/contrataciones/busqueda/convocatorias.php"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272a] bg-[#09090b] px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-50"
+        >
           <ExternalLink className="h-3.5 w-3.5" />
           Ver en SICOES
-        </button>
+        </a>
       </div>
     </article>
   )

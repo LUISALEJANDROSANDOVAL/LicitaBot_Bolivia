@@ -155,19 +155,19 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
             <Terminal className="h-4 w-4" />
             LicitaBot Bolivia · SICOES + Zavu
           </div>
-          <div className="flex items-center gap-6 text-xs text-zinc-500">
-            <a href="#" className="transition-colors hover:text-zinc-300">
-              Documentación
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-zinc-500 sm:justify-end">
+            <a href="https://sicoes.gob.bo/" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-zinc-300">
+              SICOES Oficial
             </a>
-            <a href="#" className="transition-colors hover:text-zinc-300">
-              API
+            <a href="https://zavu.dev" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-zinc-300">
+              Zavu API
             </a>
-            <a href="#" className="transition-colors hover:text-zinc-300">
-              Privacidad
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-zinc-300">
+              GitHub
             </a>
-            <a href="#" className="transition-colors hover:text-zinc-300">
-              Contacto
-            </a>
+            <Link href="/auth" className="transition-colors hover:text-zinc-300">
+              Acceder
+            </Link>
           </div>
         </div>
         <div className="border-t border-[#27272a] px-4 py-4 text-center text-xs text-zinc-600 sm:px-6">

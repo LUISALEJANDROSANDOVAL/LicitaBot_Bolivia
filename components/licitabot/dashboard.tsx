@@ -80,7 +80,7 @@ export function Dashboard() {
               <h2 className="text-lg font-semibold text-zinc-100">Licitaciones Detectadas</h2>
               <span className="text-xs text-zinc-500">Fuente: SICOES · actualizado en vivo</span>
             </div>
-            <TendersFeed tenders={tenders} />
+            <TendersFeed tenders={tenders} isLoading={isSimulating} />
           </div>
         </div>
       </main>

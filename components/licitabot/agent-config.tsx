@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import { Building2, Tags, KeyRound, Send, Smartphone, CheckCircle2, Settings, X } from "lucide-react"
+import { useState, useEffect, type ElementType, type ReactNode } from "react"
+import { Building2, Tags, KeyRound, Send, Smartphone, CheckCircle2, Settings, X, Loader2, AlertCircle } from "lucide-react"
 import { SECTORS } from "@/lib/licitabot-data"
 import { useAgentStore } from "@/lib/store"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
 export function AgentConfig() {
   const { 
@@ -18,8 +20,43 @@ export function AgentConfig() {
   
   const [keywordInput, setKeywordInput] = useState("")
   const [saved, setSaved] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  // El store global ya provee toggleSector
+  // --- B. Opción 2: Cargar perfil guardado desde el Backend al inicio ---
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/perfil`)
+        if (res.ok) {
+          const perfil = await res.json()
+          // Sincronizar el estado local de Zustand con los datos del backend
+          if (perfil.nombre_empresa) setCompany(perfil.nombre_empresa)
+          if (Array.isArray(perfil.palabras_clave)) setKeywords(perfil.palabras_clave)
+          if (perfil.telegram_id) setTelegramId(perfil.telegram_id)
+          if (perfil.telefono_sms) setPhone(perfil.telefono_sms)
+          if (typeof perfil.telegram_activo === "boolean") setTelegramOn(perfil.telegram_activo)
+          if (typeof perfil.sms_activo === "boolean") setSmsOn(perfil.sms_activo)
+          // Sectores: sincronizar seleccionando cada sector del backend
+          if (Array.isArray(perfil.sectores) && perfil.sectores.length > 0) {
+            // Obtenemos el estado actual directamente del store para evitar dependencias circulares
+            const currentSectors = useAgentStore.getState().selectedSectors
+            perfil.sectores.forEach((s: string) => {
+              if (!currentSectors.includes(s)) {
+                useAgentStore.getState().toggleSector(s)
+              }
+            })
+          }
+        }
+        // Si el backend devuelve 404 (no hay perfil aún), simplemente usamos los valores de Zustand
+      } catch {
+        // Backend offline: la UI funciona con el store local de Zustand (comportamiento anterior)
+        console.warn("[LicitaBot] No se pudo cargar el perfil del backend.")
+      }
+    }
+
+    loadProfile()
+  }, [setCompany, setKeywords, setTelegramId, setPhone, setTelegramOn, setSmsOn])
 
   const handleAddKeyword = () => {
     const value = keywordInput.trim().toLowerCase()
@@ -29,9 +66,42 @@ export function AgentConfig() {
     setKeywordInput("")
   }
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+  // --- B. Guardar perfil en el Backend (POST /api/perfil) ---
+  const handleSave = async () => {
+    setIsSaving(true)
+    setSaveError(null)
+
+    const payload = {
+      nombre_empresa: company,
+      telefono_sms: phone || null,
+      telegram_id: telegramId || null,
+      telegram_activo: telegramOn,
+      sms_activo: smsOn,
+      sectores: selectedSectors,
+      palabras_clave: keywords,
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/perfil`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (res.ok) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2500)
+      } else {
+        const err = await res.json()
+        setSaveError(err.detail || "Error al guardar el perfil.")
+        setTimeout(() => setSaveError(null), 4000)
+      }
+    } catch {
+      setSaveError("Backend no disponible. El perfil se guardó localmente.")
+      setTimeout(() => setSaveError(null), 4000)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -116,7 +186,7 @@ export function AgentConfig() {
             icon={Send}
             title="Telegram"
             active={telegramOn}
-            onToggle={() => setTelegramOn((v) => !v)}
+            onToggle={() => setTelegramOn(!telegramOn)}
           >
             <input
               value={telegramId}
@@ -131,7 +201,7 @@ export function AgentConfig() {
             icon={Smartphone}
             title="SMS"
             active={smsOn}
-            onToggle={() => setSmsOn((v) => !v)}
+            onToggle={() => setSmsOn(!smsOn)}
           >
             <input
               value={phone}
@@ -145,16 +215,24 @@ export function AgentConfig() {
 
         <button
           onClick={handleSave}
-          className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
+          disabled={isSaving}
+          className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
             saved
               ? "border border-[#27272a] bg-[#09090b] text-zinc-300"
+              : isSaving
+              ? "border border-[#27272a] bg-[#09090b] text-zinc-400"
               : "bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
           }`}
         >
           {saved ? (
             <>
-              <CheckCircle2 className="h-4 w-4" />
+              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
               Agente activado correctamente
+            </>
+          ) : isSaving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Guardando en el servidor...
             </>
           ) : (
             <>
@@ -163,6 +241,13 @@ export function AgentConfig() {
             </>
           )}
         </button>
+
+        {saveError && (
+          <div className="flex items-center gap-2 rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            {saveError}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -173,9 +258,9 @@ function Field({
   label,
   children,
 }: {
-  icon: React.ElementType
+  icon: ElementType
   label: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -195,11 +280,11 @@ function ChannelToggle({
   onToggle,
   children,
 }: {
-  icon: React.ElementType
+  icon: ElementType
   title: string
   active: boolean
   onToggle: () => void
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <div

@@ -1,59 +1,71 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { SiteHeader } from "@/components/licitabot/site-header"
 import { AgentConfig } from "@/components/licitabot/agent-config"
 import { TendersFeed } from "@/components/licitabot/tenders-feed"
 import { LiveSimulator } from "@/components/licitabot/live-simulator"
 import { ZavuToast } from "@/components/licitabot/zavu-toast"
-import { INITIAL_TENDERS, SIMULATED_TENDER, type Tender } from "@/lib/licitabot-data"
+import { INITIAL_TENDERS, type Tender } from "@/lib/licitabot-data"
 
-import { useAgentStore } from "@/lib/store"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
 export function Dashboard() {
-  const { telegramOn, telegramId, smsOn, phone } = useAgentStore()
-  const [tenders, setTenders] = useState<Tender[]>(INITIAL_TENDERS)
+  const [tenders, setTenders] = useState<Tender[]>([])
+  const [isLoadingFeed, setIsLoadingFeed] = useState(true)
   const [isSimulating, setIsSimulating] = useState(false)
   const [toast, setToast] = useState<Tender | null>(null)
 
+  // --- A. Obtener Licitaciones Reales al cargar ---
+  useEffect(() => {
+    const fetchTenders = async () => {
+      setIsLoadingFeed(true)
+      try {
+        const res = await fetch(`${API_URL}/api/licitaciones`)
+        if (res.ok) {
+          const data = await res.json() as Tender[]
+          // Si el backend devuelve datos, usarlos; si está vacío, mostrar mocks de demostración
+          setTenders(data.length > 0 ? data : INITIAL_TENDERS)
+        } else {
+          // Backend no disponible: usar datos de demostración para que la UI no quede vacía
+          console.warn("[LicitaBot] Backend no disponible, usando datos de demostración.")
+          setTenders(INITIAL_TENDERS)
+        }
+      } catch {
+        console.warn("[LicitaBot] No se pudo conectar al backend. Mostrando datos de demo.")
+        setTenders(INITIAL_TENDERS)
+      } finally {
+        setIsLoadingFeed(false)
+      }
+    }
+
+    fetchTenders()
+  }, [])
+
+  // --- C. Botón Simular: dispara el pipeline completo en el backend (IA + Zavu) ---
   const handleSimulate = async () => {
     if (isSimulating) return
     setIsSimulating(true)
 
-    const fresh: Tender = {
-      ...SIMULATED_TENDER,
-      id: `SICOES-2026-${Math.floor(1000 + Math.random() * 8999)}`,
-    }
-
     try {
-      // 1. Enviar Alerta Real por Zavu (usando el backend BFF)
-      const to = telegramOn ? telegramId : phone
-      const channel = telegramOn ? "telegram" : "sms"
+      const res = await fetch(`${API_URL}/api/demo/simular`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
 
-      // Solo si el usuario configuró su ID/Teléfono
-      if (to && to.trim() !== "" && !to.startsWith("@")) {
-        const text = `🚨 *Match detectado — LicitaBot*\n\n📋 *${fresh.title} — ${fresh.location}*\n💰 Presupuesto: Bs. ${fresh.amount.toLocaleString()}\n⏰ Cierre: ${fresh.deadline}\n\n🔗 Ver pliego: https://sicoes.gob.bo/`
-        
-        const res = await fetch('/api/zavu', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to, text, channel })
-        })
-        
-        if (!res.ok) {
-          console.error("Zavu API Error:", await res.text())
-        }
+      if (res.ok) {
+        const freshTender: Tender = await res.json()
+        setTenders((prev) => [freshTender, ...prev])
+        setToast(freshTender)
+        setTimeout(() => setToast(null), 6000)
       } else {
-        // En un entorno real mostraríamos un error en la UI, pero para la demo seguimos
-        console.warn("No hay Telegram Chat ID configurado válido (debe ser numérico).")
+        const error = await res.json()
+        console.error("[LicitaBot] Error al simular:", error.detail)
+        alert(`⚠️ ${error.detail || "Error al simular. ¿Configuraste y guardaste tu perfil primero?"}`)
       }
-
-      // 2. Actualizar UI
-      setTenders((prev) => [fresh, ...prev])
-      setToast(fresh)
-      setTimeout(() => setToast(null), 6000)
-    } catch (e) {
-      console.error(e)
+    } catch {
+      console.error("[LicitaBot] Backend no disponible para la simulación.")
+      alert("⚠️ El backend no está corriendo. Inicia el servidor FastAPI con: uvicorn main:app --reload")
     } finally {
       setIsSimulating(false)
     }
@@ -80,7 +92,7 @@ export function Dashboard() {
               <h2 className="text-lg font-semibold text-zinc-100">Licitaciones Detectadas</h2>
               <span className="text-xs text-zinc-500">Fuente: SICOES · actualizado en vivo</span>
             </div>
-            <TendersFeed tenders={tenders} isLoading={isSimulating} />
+            <TendersFeed tenders={tenders} isLoading={isLoadingFeed || isSimulating} />
           </div>
         </div>
       </main>

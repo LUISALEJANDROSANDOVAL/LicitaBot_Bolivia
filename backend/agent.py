@@ -102,7 +102,7 @@ def evaluar_licitaciones(licitaciones: list, perfil: dict):
         3. Si la licitación NO tiene NADA que ver con el rubro del cliente, IGNÓRALA silenciosamente.
         """
 
-        response = client.chat.completions.create(
+        response = client.chat.completions.create( # type: ignore
             model="openai/gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},

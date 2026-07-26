@@ -1,0 +1,6 @@
+packages:
+  - "frontend"
+
+allowBuilds:
+  msw: true
+  sharp: true

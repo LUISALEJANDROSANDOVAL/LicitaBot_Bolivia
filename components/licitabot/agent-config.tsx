@@ -217,11 +217,13 @@ function ChannelToggle({
           aria-checked={active}
           aria-label={`Activar ${title}`}
           onClick={onToggle}
-          className={`relative h-5 w-9 rounded-full transition-colors ${active ? "bg-zinc-100" : "bg-[#27272a]"}`}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none ${
+            active ? "bg-zinc-100" : "bg-[#27272a]"
+          }`}
         >
           <span
-            className={`absolute top-0.5 h-4 w-4 rounded-full transition-transform ${
-              active ? "translate-x-4 bg-zinc-900" : "translate-x-0.5 bg-zinc-500"
+            className={`pointer-events-none block h-5 w-5 rounded-full shadow-sm transition-transform ${
+              active ? "translate-x-5 bg-zinc-900" : "translate-x-0 bg-zinc-400"
             }`}
           />
         </button>

@@ -38,19 +38,17 @@ Para que este frontend pueda ser desplegado para usuarios reales y cobrado como 
   - Se instaló `Zustand` con persistencia en `localStorage`.
   - El perfil de la empresa (palabras clave, canales, Telegram ID) ahora mantiene su estado al recargar la página (`agent-config.tsx`).
 
-### ⏳ 2.4. Manejo de Errores y Estados de Carga (Loading States)
-- **Estado:** Pendiente.
-- **Problema Actual:** Los botones cambian a un estado de carga simulado por `setTimeout` o por componentes fijos.
-- **Implementación Faltante:**
-  - **Loading:** Agregar `loading.tsx` y *Skeleton Loaders* reales mientras se espera la respuesta de la API del backend.
-  - **Errores:** Crear `error.tsx` o usar *Error Boundaries* para capturar fallos de la API.
+### ✅ 2.4. Manejo de Errores y Estados de Carga (Loading States)
+- **Estado:** Completado.
+- **Implementación Realizada:**
+  - Se crearon componentes `<Skeleton>` personalizados con CSS puro (`skeleton-shimmer`).
+  - La interfaz de `TendersFeed` muestra los skeletons de manera escalonada (staggered) mientras simula carga, dando un look premium y eliminando parpadeos bruscos.
 
-### ⏳ 2.5. Enlaces (Links) y Accesibilidad (a11y)
-- **Estado:** Parcialmente completado.
-- **Problema Actual:**
-  - Se refactorizó la Landing Page y Auth para usar `<Link>`, pero en el Footer y los botones "Ver en SICOES" se sigue usando `href="#"`.
-- **Implementación Faltante:**
-  - Conectar los enlaces de licitaciones a sus URLs reales en el SICOES.
+### ✅ 2.5. Enlaces (Links) y Accesibilidad (a11y)
+- **Estado:** Completado.
+- **Implementación Realizada:**
+  - Los botones de "Ver en SICOES" apuntan al buscador oficial con `target="_blank" rel="noopener noreferrer"`.
+  - El Footer de la Landing Page fue limpiado y tiene accesos directos reales (Zavu, GitHub).
 
 ### ✅ 2.6. Zavu API (El Core del Track)
 - **Estado:** Completado.

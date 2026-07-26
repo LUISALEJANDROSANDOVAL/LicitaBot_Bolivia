@@ -40,7 +40,10 @@ export async function POST(request: NextRequest) {
         'X-Title': 'LicitaBot Bolivia',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-001',
+        // OpenRouter Fallback: Si el primero falla, salta al segundo automáticamente
+        // Usamos openrouter/auto para que OpenRouter elija el mejor modelo gratuito o de bajo costo disponible
+        // Esto evita errores de modelos descontinuados o saturados.
+        model: "openrouter/auto",
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           ...messages,

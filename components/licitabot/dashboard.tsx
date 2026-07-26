@@ -3,20 +3,25 @@
 import { useState, useEffect } from "react"
 import { SiteHeader } from "@/components/licitabot/site-header"
 import { AgentConfig } from "@/components/licitabot/agent-config"
+import { ChatPanel } from "@/components/licitabot/chat-panel"
 import { TendersFeed } from "@/components/licitabot/tenders-feed"
 import { LiveSimulator } from "@/components/licitabot/live-simulator"
 import { ZavuToast } from "@/components/licitabot/zavu-toast"
 import { INITIAL_TENDERS, type Tender } from "@/lib/licitabot-data"
+import { useAgentStore } from "@/lib/store"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
 export function Dashboard() {
+  // Estado del store para el ChatPanel y los canales de Zavu
+  const { company, keywords, selectedSectors } = useAgentStore()
+
   const [tenders, setTenders] = useState<Tender[]>([])
   const [isLoadingFeed, setIsLoadingFeed] = useState(true)
   const [isSimulating, setIsSimulating] = useState(false)
   const [toast, setToast] = useState<Tender | null>(null)
 
-  // --- A. Obtener Licitaciones Reales al cargar ---
+  // --- A. Obtener Licitaciones Reales al cargar la página ---
   useEffect(() => {
     const fetchTenders = async () => {
       setIsLoadingFeed(true)
@@ -24,10 +29,9 @@ export function Dashboard() {
         const res = await fetch(`${API_URL}/api/licitaciones`)
         if (res.ok) {
           const data = await res.json() as Tender[]
-          // Si el backend devuelve datos, usarlos; si está vacío, mostrar mocks de demostración
+          // Si el backend devuelve datos, usarlos; si está vacío, mostrar datos de demo
           setTenders(data.length > 0 ? data : INITIAL_TENDERS)
         } else {
-          // Backend no disponible: usar datos de demostración para que la UI no quede vacía
           console.warn("[LicitaBot] Backend no disponible, usando datos de demostración.")
           setTenders(INITIAL_TENDERS)
         }
@@ -42,12 +46,13 @@ export function Dashboard() {
     fetchTenders()
   }, [])
 
-  // --- C. Botón Simular: dispara el pipeline completo en el backend (IA + Zavu) ---
+  // --- C. Botón Simular: dispara el pipeline completo en el backend (Scraper → IA → Zavu) ---
   const handleSimulate = async () => {
     if (isSimulating) return
     setIsSimulating(true)
 
     try {
+      // El backend orquesta TODO: genera la licitación, la evalúa con IA y envía la alerta por Zavu
       const res = await fetch(`${API_URL}/api/demo/simular`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -65,7 +70,7 @@ export function Dashboard() {
       }
     } catch {
       console.error("[LicitaBot] Backend no disponible para la simulación.")
-      alert("⚠️ El backend no está corriendo. Inicia el servidor FastAPI con: uvicorn main:app --reload")
+      alert("⚠️ El backend no está corriendo. Inicia con: uvicorn main:app --reload (en /backend2)")
     } finally {
       setIsSimulating(false)
     }
@@ -82,8 +87,10 @@ export function Dashboard() {
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-28">
+            {/* Columna izquierda: Configuración del Agente + Chat de IA (Sandoval) */}
+            <div className="lg:sticky lg:top-28 flex flex-col gap-6">
               <AgentConfig />
+              <ChatPanel tenders={tenders} userProfile={{ company, keywords, selectedSectors }} />
             </div>
           </div>
 

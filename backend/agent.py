@@ -1,151 +1,79 @@
-import json
-import os
-from openai import OpenAI
-from dotenv import load_dotenv
-import sicoes_scraper
-
-# Cargar variables de entorno (como OPENAI_API_KEY)
-load_dotenv()
-
-# --- 1. DATOS FALSOS (MOCKS) ---
-# Aquí simulamos lo que la Persona 2 (Scraper) nos entregará en el futuro.
-licitaciones_mock = [
-    {
-        "id": "LIC-001",
-        "titulo": "Adquisición de Servidores de Alto Rendimiento",
-        "objeto": "Compra de 50 servidores blade para el Data Center gubernamental.",
-        "presupuesto_estimado_bs": 1500000,
-        "ubicacion": "La Paz",
-        "fecha_limite": "2024-05-15",
-        "link_documento": "http://sicoes.gob.bo/licitacion/1"
-    },
-    {
-        "id": "LIC-002",
-        "titulo": "Mantenimiento de Áreas Verdes",
-        "objeto": "Servicio de poda y cuidado de plazas centrales.",
-        "presupuesto_estimado_bs": 30000,
-        "ubicacion": "Cochabamba",
-        "fecha_limite": "2024-04-20",
-        "link_documento": "http://sicoes.gob.bo/licitacion/2"
-    },
-    {
-        "id": "LIC-003",
-        "titulo": "Construcción de Puente Vehicular Norte",
-        "objeto": "Obra gruesa y fina para el nuevo puente de conexión vial.",
-        "presupuesto_estimado_bs": 5000000,
-        "ubicacion": "Santa Cruz",
-        "fecha_limite": "2024-08-10",
-        "link_documento": "http://sicoes.gob.bo/licitacion/3"
-    }
-]
-
-perfil_usuario_mock = {
-    "empresa": "TechBolivia S.R.L.",
-    "rubro_principal": "Tecnología, Informática, Hardware",
-    "palabras_clave_interes": ["servidores", "computadoras", "software", "redes"],
-    "ubicacion_preferida": "Cualquiera",
-    "presupuesto_minimo_bs": 100000
-}
+from typing import Dict, Any
 
 
-# --- 2. DEFINICIÓN DE HERRAMIENTAS (FUNCTION CALLING) ---
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "enviar_alerta_zavu",
-            "description": "Llama a la API de Zavu para enviar un SMS/Telegram al usuario cuando encuentras una licitación que hace MATCH perfecto con su perfil.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "id_licitacion": {
-                        "type": "string",
-                        "description": "El ID de la licitación encontrada."
-                    },
-                    "resumen_ejecutivo": {
-                        "type": "string",
-                        "description": "Un mensaje persuasivo corto (máximo 3 líneas) explicando por qué esta licitación es ideal para la empresa."
-                    }
-                },
-                "required": ["id_licitacion", "resumen_ejecutivo"]
-            }
-        }
-    }
-]
+def evaluar_licitacion(licitacion: Dict[str, Any], perfil: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Decisión cognitiva del Agente de IA: cruza la licitación con el perfil de la PyME
+    y devuelve un diccionario con el score, nivel, resumen y estado de la evaluación.
 
+    Este módulo es importado por backend2/main.py para orquestar el pipeline completo
+    (Scraper → IA → Zavu).
+    """
+    titulo = licitacion["titulo"].lower()
+    keywords = perfil.get("palabras_clave", [])
+    sectores = perfil.get("sectores", [])
 
-# --- 3. LOGICA PRINCIPAL (EL CEREBRO) ---
-def evaluar_licitaciones(licitaciones: list, perfil: dict):
-    print(f"[INFO] Evaluando {len(licitaciones)} licitaciones para el perfil: {perfil['empresa']}")
-    
-    # Llamada al LLM
-    try:
-        # Configuración para OpenRouter
-        client = OpenAI(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=os.getenv("OPENROUTER_API_KEY"),
+    # Buscar coincidencias de palabras clave en el título
+    coincidencias = [kw for kw in keywords if kw.lower() in titulo]
+    has_keyword_match = len(coincidencias) > 0
+
+    # Evaluar si la licitación encaja en el sector de obras civiles
+    terminos_obra_civil = ["puente", "pavimentación", "cemento", "asfalto", "construcción", "muro", "vial", "drenaje"]
+    es_obra_civil = any(term in titulo for term in terminos_obra_civil)
+    obra_civil_perfil = "Obras civiles" in sectores
+
+    match_score = 0
+    match_level = "Bajo"
+    estado_evaluacion = "Descartado"
+    resumen_ia = ""
+
+    if has_keyword_match and es_obra_civil and obra_civil_perfil:
+        # Match Alto: coinciden palabras clave Y sector
+        match_score = min(90 + len(coincidencias) * 2, 100)
+        match_level = "Alto"
+        estado_evaluacion = "Aprobado"
+        coincidencia_str = ", ".join(coincidencias)
+        resumen_ia = (
+            f"¡Excelente oportunidad detectada! Esta licitación encaja perfectamente con tu rubro "
+            f"de 'Obras civiles'. Hace match con las palabras clave: '{coincidencia_str}'. "
+            f"El presupuesto de {licitacion.get('presupuesto')} Bs. es apto y el plazo es "
+            f"{licitacion.get('plazo_presentacion')}. Se recomienda preparar la postulación."
         )
-        
-        system_prompt = f"""
-        Eres un Analista Experto en Licitaciones del Estado Boliviano (SICOES). 
-        Tu trabajo es evaluar nuevas contrataciones públicas y decidir si son una oportunidad de oro para tu cliente.
-        
-        PERFIL DE TU CLIENTE:
-        - Nombre: {perfil['empresa']}
-        - Rubro: {perfil['rubro_principal']}
-        - Palabras Clave: {", ".join(perfil['palabras_clave_interes'])}
-        - Presupuesto Mínimo Deseado: {perfil['presupuesto_minimo_bs']} Bs
-        
-        REGLAS:
-        1. Lee atentamente la lista de licitaciones proporcionadas.
-        2. Si encuentras una o más licitaciones que hacen "MATCH" con las palabras clave o el rubro del cliente, DEBES invocar la herramienta 'enviar_alerta_zavu'.
-        3. Si la licitación NO tiene NADA que ver con el rubro del cliente, IGNÓRALA silenciosamente.
-        """
-
-        response = client.chat.completions.create( # type: ignore
-            model="openai/gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Aquí están las nuevas licitaciones del día en formato JSON:\n{json.dumps(licitaciones, indent=2)}"}
-            ],
-            tools=tools,
-            tool_choice="auto", # Permite al modelo decidir si llama o no a la función
-            temperature=0.1
+    elif es_obra_civil and obra_civil_perfil:
+        # Match Medio: coincide sector pero no keywords específicas
+        match_score = 70
+        match_level = "Medio"
+        estado_evaluacion = "Aprobado"
+        resumen_ia = (
+            f"Licitación de coincidencia media. Pertenece a tu rubro principal de 'Obras civiles', "
+            f"aunque no contiene ninguna de tus palabras clave configuradas. "
+            f"El objeto es '{licitacion['titulo']}'. Evalúa si tu empresa cuenta con la capacidad técnica requerida."
         )
-        
-        mensaje = response.choices[0].message
-        
-        # --- 4. MANEJO DE LA DECISIÓN DEL AGENTE ---
-        if mensaje.tool_calls:
-            for tool_call in mensaje.tool_calls:
-                if tool_call.function.name == "enviar_alerta_zavu":
-                    # El agente decidió que hay un Match
-                    argumentos = json.loads(tool_call.function.arguments)
-                    print("\n[ALERTA] ¡MATCH ENCONTRADO! El Agente decidió notificar:")
-                    print(f"   => ID Licitación: {argumentos.get('id_licitacion')}")
-                    print(f"   => Resumen Generado: {argumentos.get('resumen_ejecutivo')}")
-                    
-                    # AQUÍ: En el futuro conectaremos con el código real de zavu_client.py
-        else:
-            # El agente decidió que no hay nada interesante
-            print("\n[INFO] Ninguna de las licitaciones evaluadas hace match con el perfil de este usuario.")
-            
-    except Exception as e:
-        print(f"[ERROR] Error al conectar con OpenRouter: {e}")
-        print("[AYUDA] Recuerda: Necesitas configurar la variable de entorno OPENROUTER_API_KEY para ejecutar esto.")
-
-# Ejecución principal con datos reales
-if __name__ == "__main__":
-    print("[SISTEMA] Iniciando LicitaBot - Agente de Inteligencia Artificial\n")
-    
-    print("[INFO] Obteniendo datos reales del SICOES...")
-    URL_SICOES = "https://www.sicoesmonitor.com/licitaciones"
-    licitaciones_reales = sicoes_scraper.extraer_licitaciones(URL_SICOES)
-    
-    if licitaciones_reales:
-        evaluar_licitaciones(licitaciones_reales, perfil_usuario_mock)
+    elif has_keyword_match:
+        # Match Medio: coinciden palabras clave pero no es rubro principal
+        match_score = 60
+        match_level = "Medio"
+        estado_evaluacion = "Aprobado"
+        coincidencia_str = ", ".join(coincidencias)
+        resumen_ia = (
+            f"Match de interés medio. Contiene la palabra clave '{coincidencia_str}', pero el rubro "
+            f"del proyecto podría estar fuera de tu sector principal. Revisa los detalles del pliego."
+        )
     else:
-        print("[AVISO] No se encontraron licitaciones nuevas o falló el scraper. Usando datos falsos de respaldo...")
-        evaluar_licitaciones(licitaciones_mock, perfil_usuario_mock)
-        
-    print("\n[OK] Proceso completado.")
+        # Sin match: descartar silenciosamente
+        match_score = 25
+        match_level = "Bajo"
+        estado_evaluacion = "Descartado"
+        resumen_ia = (
+            f"Esta licitación fue filtrada y descartada automáticamente. No coincide con tu rubro "
+            f"de interés ({', '.join(sectores)}) ni contiene palabras clave configuradas en tu perfil."
+        )
+
+    return {
+        "perfil_id": perfil["id"],
+        "id_sicoes": licitacion["id_sicoes"],
+        "match_score": match_score,
+        "match_level": match_level,
+        "resumen_ia": resumen_ia,
+        "estado_evaluacion": estado_evaluacion,
+    }

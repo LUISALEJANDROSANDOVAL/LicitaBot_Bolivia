@@ -1,0 +1,7 @@
+{
+  "venvPath": "d:/cursorhackthon/LicitaBot_Bolivia/backend",
+  "venv": ".venv",
+  "extraPaths": [
+    "d:/cursorhackthon/LicitaBot_Bolivia"
+  ]
+}
